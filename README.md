@@ -28,10 +28,10 @@ Usage: ./ql570 printer n|w pngfile [cutoff]
   Hint: If the printer's status LED blinks red, then your media type is probably wrong.
 ```
 
-If you feed try to print a greyscale or monochrome PNG, then it will be converted to monochrome before printing. The image is converted by turning all pixels that have a value of less than 180 out of 255 in either color channel black, and the rest white. The cutoff can be adjusted to something other than 180 by specifying it on the command line.
+If you try to print a greyscale or monochrome PNG, then it will be converted to monochrome before printing. The image is converted by turning all pixels that have a value of less than 180 out of 255 in either color channel to black, and the rest to white. The cutoff can be adjusted to something other than 180 by specifying it on the command line.
 
 # Credit #
 
-Asbjørn Sloth Tønnesen reversed engineered the QL-570 protocol and wrote all the important parts of this program.
+Asbjørn Sloth Tønnesen reverse-engineered the QL-570 protocol and wrote all the important parts of this program.
 
 Marc Juul added support for different paper sizes and conversion cutoff.

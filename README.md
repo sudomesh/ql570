@@ -7,7 +7,7 @@ This program prints 1083 by 336 pixel monochrome PNG files on the Brother QL-570
 You need libpng and the libpng header files in order to compile. To install the required packages on a Debiab-based system:
 
 ```
-sudo aptitude install build-essential libpng12-0 libpng12-dev
+sudo aptitude install build-essential libpng12-0 libpng12-dev pkg-config
 ```
 
 # Compiling #

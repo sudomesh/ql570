@@ -23,6 +23,7 @@
 #define ESC (0x1b)
 #define PAPER_WIDTH_NARROW (29)
 #define PAPER_WIDTH_WIDE (62)
+#define PAPER_QL700 (-1)
 
 #define DEBUG
 
@@ -82,9 +83,15 @@ void ql570_print(pngdata_t * img, unsigned int paper_width)
 	fprintf(fp, "%c%c", ESC, '@');
 
 	/* Set media type */
-  //	fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0xa6, 0x0a, 29, 0, img->h & 0xff, img->h >> 8, 0, 0, 0, 0);
-	fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0xa6, 0x0a, paper_width, 0, img->h & 0xff, img->h >> 8, 0, 0, 0, 0);
-
+	if( paper_width == PAPER_QL700 ) {
+		// sample roll that ships with QL700
+		// 1BH, 69H, 7AH, 0EH, 0BH, 1DH, 5AH, DFH, 03H, 00H, 00H, 00H, 00H
+		fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0x0e, 0x0b, 0x1d, 0x5a, 0xdf, 0x03, 0, 0, 0, 0);
+	} else {
+//  	fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0xa6, 0x0a, 29, 0, img->h & 0xff, img->h >> 8, 0, 0, 0, 0);
+		fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0xa6, 0x0a, paper_width, 0, img->h & 0xff, img->h >> 8, 0, 0, 0, 0);
+	}
+	
 	/* Set cut type */
 	fprintf(fp, "%c%c%c", ESC, 'i', 'K', 8);
 
@@ -251,8 +258,9 @@ pngdata_t * loadpng(const char * path, int cutoff) {
 }
 
 void usage(const char* cmd) {
-		fprintf(stderr, "Usage: %s printer n|w pngfile [cutoff]\n", cmd);
-    fprintf(stderr, "  Where 'n' is narrow paper (29 mm) and 'w' is wide paper (62 mm).\n");
+		fprintf(stderr, "Usage: %s printer n|w|7 pngfile [cutoff]\n", cmd);
+    fprintf(stderr, "  Where 'n' is narrow paper (29 mm) and 'w' is wide paper (62 mm) and '7'\n");
+	fprintf(stderr, "  is the 1.1\" x 3.5\" sample labels that ship with the QL-700.\n");
     fprintf(stderr, "  [cutoff] is the optional color/greyscale to monochrome conversion cutoff (default: 180).\n");
     fprintf(stderr, "  Example: %s /dev/usb/lp0 n image.png\n", cmd);
     fprintf(stderr, "  Hint: If the printer's status LED blinks red, then your media type is probably wrong.\n");
@@ -285,6 +293,8 @@ int main(int argc, const char ** argv) {
     paper_type = PAPER_WIDTH_NARROW;
   } else if(argv[2][0] == 'w') {
     paper_type = PAPER_WIDTH_WIDE;
+  } else if(argv[2][0] == '7') {
+    paper_type = PAPER_QL700;
   } else {
     usage(argv[0]);
   }

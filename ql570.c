@@ -93,10 +93,12 @@ void ql570_print(pngdata_t * img, unsigned int paper_width)
 	}
 	
 	/* Set cut type */
-	fprintf(fp, "%c%c%c", ESC, 'i', 'K', 8);
+  //	fprintf(fp, "%c%c%c%c", ESC, 'i', 'K', 8);
+  fprintf(fp, "%c%c%c", ESC, 'i', 'K');
 
 	/* Enable cutter */
-	fprintf(fp, "%c%c%c", ESC, 'i', 'A', 1);
+  //	fprintf(fp, "%c%c%c%c", ESC, 'i', 'A', 1);
+	fprintf(fp, "%c%c%c", ESC, 'i', 'A');
 
 	/* Set margin = 0 */
 	fprintf(fp, "%c%c%c%c%c", ESC, 'i', 'd', 0, 0);

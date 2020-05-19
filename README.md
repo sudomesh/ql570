@@ -23,9 +23,29 @@ make
 # Usage #
 
 ```
-Usage: ./ql570 printer n|w|7 pngfile [cutoff]
-  Where 'n' is narrow paper (29 mm) and 'w' is wide paper (62 mm) and '7'
-  is the 1.1\" x 3.5\" sample labels that ship with the QL-700.\n")
+Usage: ./ql570 printer format pngfile [cutoff]
+  format:
+  - 12      12 mm endless (DK-22214)
+  - 29
+    n       29 mm endless (DK-22210, 22211)
+  - 38      38 mm endless (DK-22225)
+  - 50      50 mm endless (DK-22246)
+  - 54      54 mm endless (DK-N55224)
+  - 62
+    w       62 mm endless (DK-22205, 44205, 44605, 22212, 22251, 22606, 22113)
+  - 12d     Ø 12 mm round (DK-11219)
+  - 24d     Ø 24 mm round (DK-11218)
+  - 58d     Ø 58 mm round (DK-11207)
+  - 17x54   17x54 mm      (DK-11204)
+  - 17x87   17x87 mm      (DK-11203)
+  - 23x23   23x23 mm      (DK-11221)
+  - 29x90
+    7       29x90 mm      (DK-11201)
+  - 38x90   38x90 mm      (DK-11208)
+  - 39x48   39x48 mm
+  - 52x29   52x29 mm
+  - 62x29   62x29 mm      (DK-11209)
+  - 62x100  62x100 mm     (DK-11202)
   [cutoff] is the optional color/greyscale to monochrome conversion cutoff (default: 180).
   Example: ./ql570 /dev/usb/lp0 n image.png
   Hint: If the printer's status LED blinks red, then your media type is probably wrong.
@@ -38,3 +58,5 @@ If you try to print a greyscale or monochrome PNG, then it will be converted to 
 Asbjørn Sloth Tønnesen reverse-engineered the QL-570 protocol and wrote all the important parts of this program.
 
 Marc Juul added support for different paper sizes and conversion cutoff.
+
+Luca Zimmermann added support for mostly all paper sizes and option for print quality vs. speed.

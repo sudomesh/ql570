@@ -48,41 +48,50 @@ const _Bool         QUALITY         = 1;
 
 /*
  * DATA FORMAT
- * ESC i z F1 F2 WIDTH MEDIALENGTH PRINTLENGHT PRINTLENGHT 00 00 PAGE 00
+ * ESC i z F1 F2 WIDTH_MM MEDIALENGTH_MM PRINTLENGHT_PX_LSB PRINTLENGHT_PX_MSB 00 00 PAGE_LSB PAGE_MSB
+ * MEDIALENGTH_MM is only set if not endless
+ * PRINTLENGTH in respect of set dpi
  * F1:
- * 0x80
- * 0x40 Quality>Speed 1 / Speed>Quality 0
- * 0x20
- * 0x10
- * 0x08
- * 0x04
- * 0x02
- * 0x01
- *
+ * 80H (seems to be always 1 for me)
+ * 40H Quality>Speed (1) / Speed>Quality (0)
+ * 20H
+ * 10H
+ * 08H (seems to be always 1 for me)
+ * 04H (seems to be always 1 for me)
+ * 02H (seems to be always 1 for me)
+ * 01H
  * F2:
- * 0x80 (seems to be always 1)
- * 0x40
- * 0x20 (seems to be always 1)
- * 0x10
- * 0x08
- * 0x04
- * 0x02
- * 0x01 Specific Length 1 / Endless 0
+ * 80H
+ * 40H
+ * 20H
+ * 10H
+ * 08H
+ * 04H
+ * 02H
+ * 01H Specific Length (1) / Endless (0)
  *
- * MEDIALENGTH is only set if not endless
+ * ESC 'i' 'd' XX with XX:
+ * 80H
+ * 40H Cutting between lables on (1) / off (0)
+ * 20H
+ * 10H
+ * 08H
+ * 04H
+ * 02H
+ * 01H
  *
+ * ESC 'i' 'M' XX (XX = 35D/23H 300dpi, 70D/46H for 600dpi)
  *
+ * ESC 'i' 'A' XX (XX = cut between every n pages; 01H, 02H, ..., 63H, ...?)
  *
- * Cutting:
- * ESC i A XX (XX = everyXlabel; 01, 02, ...)
- * ESC i K XX with XX:
- * 0x80
- * 0x40 600dpi 1 / 300dpi 0
- * 0x20
- * 0x10
- * 0x08 Cutting on 1 / Cutting off 0
- * 0x04
- * 0x02
+ * ESC 'i' 'K' XX with XX:
+ * 80H
+ * 40H 600dpi (1) / 300dpi (0)
+ * 20H
+ * 10H
+ * 08H Cutting at end on (1) / off (0)
+ * 04H
+ * 02H
  */
 
 FILE * fp;

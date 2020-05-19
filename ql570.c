@@ -4,6 +4,7 @@
  *
  * Copyright 2011 Asbjørn Sloth Tønnesen <code@asbjorn.it>
  * Copyright 2013 Marc Juul <juul@labitat.dk>
+ * Copyright 2020 Luca Zimmermann <git@sndstrm.de>
  *
  * This code is liensed under the GPLv3
  *

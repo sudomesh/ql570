@@ -88,21 +88,18 @@ void ql570_print(pngdata_t * img, unsigned int paper_width)
 		// 1BH, 69H, 7AH, 0EH, 0BH, 1DH, 5AH, DFH, 03H, 00H, 00H, 00H, 00H
 		fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0x0e, 0x0b, 0x1d, 0x5a, 0xdf, 0x03, 0, 0, 0, 0);
 	} else {
-//  	fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0xa6, 0x0a, 29, 0, img->h & 0xff, img->h >> 8, 0, 0, 0, 0);
 		fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0xa6, 0x0a, paper_width, 0, img->h & 0xff, img->h >> 8, 0, 0, 0, 0);
 	}
 	
 	/* Set cut type */
-  //	fprintf(fp, "%c%c%c%c", ESC, 'i', 'K', 8);
-  fprintf(fp, "%c%c%c", ESC, 'i', 'K');
+	fprintf(fp, "%c%c%c", ESC, 'i', 'K');
 
 	/* Enable cutter */
-  //	fprintf(fp, "%c%c%c%c", ESC, 'i', 'A', 1);
 	fprintf(fp, "%c%c%c", ESC, 'i', 'A');
 
 	/* Set margin = 0 */
 	fprintf(fp, "%c%c%c%c%c", ESC, 'i', 'd', 0, 0);
-  
+
 	int i, j;
 	int lb = (img->w / 8) + (img->w % 8 > 0);
 	for (i=0;i<img->h;i++) {
@@ -121,12 +118,12 @@ void ql570_print(pngdata_t * img, unsigned int paper_width)
 
 void abort_(const char * s, ...)
 {
-        va_list args;
-        va_start(args, s);
-        vfprintf(stderr, s, args);
-        fprintf(stderr, "\n");
-        va_end(args);
-        abort();
+	va_list args;
+	va_start(args, s);
+	vfprintf(stderr, s, args);
+	fprintf(stderr, "\n");
+	va_end(args);
+	abort();
 }
 
 pngdata_t * loadpng(const char * path, int cutoff) {
@@ -136,38 +133,38 @@ pngdata_t * loadpng(const char * path, int cutoff) {
 	png_bytep * row_pointers;
 	int width, height, rowbytes;
 	int x, y;
-        unsigned char header[8];    // 8 is the maximum size that can be checked
+	unsigned char header[8]; // 8 is the maximum size that can be checked
 	png_byte* ptr;
 	FILE *fp;
 	int type = 0;
 	int lb;
 	uint8_t * bitmap;
 
-        /* open file and test for it being a png */
-        fp = fopen(path, "rb");
-        if (!fp)
-                abort_("[read_png_file] File %s could not be opened for reading", path);
-        fread(header, 1, 8, fp);
-        if (png_sig_cmp(header, 0, 8))
-                abort_("[read_png_file] File %s is not recognized as a PNG file", path);
+	/* open file and test for it being a png */
+	fp = fopen(path, "rb");
+	if (!fp)
+		abort_("[read_png_file] File %s could not be opened for reading", path);
+	fread(header, 1, 8, fp);
+	if (png_sig_cmp(header, 0, 8))
+		abort_("[read_png_file] File %s is not recognized as a PNG file", path);
 
-        /* initialize stuff */
-        png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	/* initialize stuff */
+	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 
-        if (!png_ptr)
-                abort_("[read_png_file] png_create_read_struct failed");
+	if (!png_ptr)
+		abort_("[read_png_file] png_create_read_struct failed");
 
-        info_ptr = png_create_info_struct(png_ptr);
-        if (!info_ptr)
-                abort_("[read_png_file] png_create_info_struct failed");
+	info_ptr = png_create_info_struct(png_ptr);
+	if (!info_ptr)
+		abort_("[read_png_file] png_create_info_struct failed");
 
-        if (setjmp(png_jmpbuf(png_ptr)))
-                abort_("[read_png_file] Error during init_io");
+	if (setjmp(png_jmpbuf(png_ptr)))
+		abort_("[read_png_file] Error during init_io");
 
-        png_init_io(png_ptr, fp);
-        png_set_sig_bytes(png_ptr, 8);
+	png_init_io(png_ptr, fp);
+	png_set_sig_bytes(png_ptr, 8);
 
-        png_read_info(png_ptr, info_ptr);
+	png_read_info(png_ptr, info_ptr);
 
 	if (png_get_channels(png_ptr, info_ptr) == 1
 	    && png_get_bit_depth(png_ptr, info_ptr) == 1) {
@@ -182,25 +179,25 @@ pngdata_t * loadpng(const char * path, int cutoff) {
 		exit(1);
 	}
 
-        width = png_get_image_width(png_ptr, info_ptr);
-        height = png_get_image_height(png_ptr, info_ptr);
+	width = png_get_image_width(png_ptr, info_ptr);
+	height = png_get_image_height(png_ptr, info_ptr);
 
-        png_read_update_info(png_ptr, info_ptr);
+	png_read_update_info(png_ptr, info_ptr);
 
-        /* read file */
-        if (setjmp(png_jmpbuf(png_ptr)))
-                abort_("[read_png_file] Error during read_image");
+	/* read file */
+	if (setjmp(png_jmpbuf(png_ptr)))
+		abort_("[read_png_file] Error during read_image");
 
-        row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * height);
+	row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * height);
 
-        rowbytes = type == 1 ? (width / 8) + (width % 8 > 0) : width << 2;
+	rowbytes = type == 1 ? (width / 8) + (width % 8 > 0) : width << 2;
 
-        for (y=0; y<height; y++)
-                row_pointers[y] = (png_byte*) malloc(rowbytes);
+	for (y=0; y<height; y++)
+		row_pointers[y] = (png_byte*) malloc(rowbytes);
 
-        png_read_image(png_ptr, row_pointers);
+	png_read_image(png_ptr, row_pointers);
 
-        fclose(fp);
+	fclose(fp);
 
 	lb = (height / 8) + (height % 8 > 0);
 	bitmap = malloc(width*lb);
@@ -208,49 +205,47 @@ pngdata_t * loadpng(const char * path, int cutoff) {
 
 	#define heat_on(x, y) bitmap[(x*lb)+(y/8)] |= 1 << (7-(y%8))
 
-  for (y=0; y<height; y++) {
-    png_byte* row = row_pointers[y];
-    for (x=0; x<width; x++) {
+	for (y=0; y<height; y++) {
+		png_byte* row = row_pointers[y];
+		for (x=0; x<width; x++) {
 			if (type == 1) {
 				ptr = &(row[x/8]);
-        if ((ptr[0] & (1 << (7-(x%8)))) == 0) {
-          heat_on(x, y);
-        }
+				if ((ptr[0] & (1 << (7-(x%8)))) == 0) {
+					heat_on(x, y);
+				}
 			} else {
-        // Color 0 (red?)
-        ptr = &(row[(x<<2)]);
-        if (ptr[0] < cutoff) { // Adjust the cutoff (0 to 255). Any pixel darker (lower) than this will be black. Higher will be white. This can be used to turn anti-aliased pngs into monochrome with some desirable cutoff for black and white.
-          heat_on(x, y);
-        }
-        // Color 1 (green?)
-        ptr = &(row[(x<<2)+1]);
-        if (ptr[0] < cutoff) {
-          heat_on(x, y);
-        }
-        // Color 2 (blue?)
-        ptr = &(row[(x<<2)+2]);
-        if (ptr[0] < cutoff) {
-          heat_on(x, y);
-        }
-        //        if ((ptr[0] & (1 << (7-(x%8)))) == 0) {
-        //          heat_on(x, y);
-        ///        }
+				// Color 0 (red?)
+				ptr = &(row[(x<<2)]);
+				if (ptr[0] < cutoff) { // Adjust the cutoff (0 to 255). Any pixel darker (lower) than this will be black. Higher will be white. This can be used to turn anti-aliased pngs into monochrome with some desirable cutoff for black and white.
+					heat_on(x, y);
+				}
+				// Color 1 (green?)
+				ptr = &(row[(x<<2)+1]);
+				if (ptr[0] < cutoff) {
+					heat_on(x, y);
+				}
+				// Color 2 (blue?)
+				ptr = &(row[(x<<2)+2]);
+				if (ptr[0] < cutoff) {
+					heat_on(x, y);
+				}
+				//if ((ptr[0] & (1 << (7-(x%8)))) == 0) {
+				//	heat_on(x, y);
+				//}
 			}
-    }
-  }
-  
-  /*
-
-  for (y=0; y<height; y++) {
-    png_byte* row = row_pointers[y+height*2];
-    for (x=0; x<width; x++) {
-      ptr = &(row[(x<<2)]);
-      if ((ptr[0] & (1 << (7-(x%8)))) == 0) {
-        heat_on(x, y+height*2);
-      }
-    }
-  }
-  */
+		}
+	}
+	/*
+	for (y=0; y<height; y++) {
+		png_byte* row = row_pointers[y+height*2];
+		for (x=0; x<width; x++) {
+			ptr = &(row[(x<<2)]);
+			if ((ptr[0] & (1 << (7-(x%8)))) == 0) {
+				heat_on(x, y+height*2);
+			}
+		}
+	}
+	*/
 
 	pngdata_t * ret = malloc(sizeof(pngdata_t));
 	ret->w = height;
@@ -260,50 +255,50 @@ pngdata_t * loadpng(const char * path, int cutoff) {
 }
 
 void usage(const char* cmd) {
-		fprintf(stderr, "Usage: %s printer n|w|7 pngfile [cutoff]\n", cmd);
-    fprintf(stderr, "  Where 'n' is narrow paper (29 mm) and 'w' is wide paper (62 mm) and '7'\n");
+	fprintf(stderr, "Usage: %s printer n|w|7 pngfile [cutoff]\n", cmd);
+	fprintf(stderr, "  Where 'n' is narrow paper (29 mm) and 'w' is wide paper (62 mm) and '7'\n");
 	fprintf(stderr, "  is the 1.1\" x 3.5\" sample labels that ship with the QL-700.\n");
-    fprintf(stderr, "  [cutoff] is the optional color/greyscale to monochrome conversion cutoff (default: 180).\n");
-    fprintf(stderr, "  Example: %s /dev/usb/lp0 n image.png\n", cmd);
-    fprintf(stderr, "  Hint: If the printer's status LED blinks red, then your media type is probably wrong.\n");
-		exit(EXIT_FAILURE);
+	fprintf(stderr, "  [cutoff] is the optional color/greyscale to monochrome conversion cutoff (default: 180).\n");
+	fprintf(stderr, "  Example: %s /dev/usb/lp0 n image.png\n", cmd);
+	fprintf(stderr, "  Hint: If the printer's status LED blinks red, then your media type is probably wrong.\n");
+	exit(EXIT_FAILURE);
 }
 
 int main(int argc, const char ** argv) {
 
-  int cutoff = 180;
+	int cutoff = 180;
 
 	if ((argc < 4) || (argc > 5)) {
-    usage(argv[0]);
-    return -1;
+		usage(argv[0]);
+		return -1;
 	}
 
-  if(argc == 5) {
-    cutoff = atoi(argv[4]);
-    if(cutoff <= 0) {
-      fprintf(stderr, "Error: Setting cutoff to 0 will result in an all-white image.\n");
-      exit(EXIT_FAILURE);
-    }
-    if(cutoff >= 255) {
-      fprintf(stderr, "Error: Setting cutoff to 255 or higher will result in an all-black image.\n");
-      exit(EXIT_FAILURE);
-    }
-  }
+	if(argc == 5) {
+		cutoff = atoi(argv[4]);
+		if(cutoff <= 0) {
+			fprintf(stderr, "Error: Setting cutoff to 0 will result in an all-white image.\n");
+			exit(EXIT_FAILURE);
+		}
+		if(cutoff >= 255) {
+			fprintf(stderr, "Error: Setting cutoff to 255 or higher will result in an all-black image.\n");
+			exit(EXIT_FAILURE);
+		}
+	}
 
-  int paper_type;
-  if(argv[2][0] == 'n') {
-    paper_type = PAPER_WIDTH_NARROW;
-  } else if(argv[2][0] == 'w') {
-    paper_type = PAPER_WIDTH_WIDE;
-  } else if(argv[2][0] == '7') {
-    paper_type = PAPER_QL700;
-  } else {
-    usage(argv[0]);
-  }
+	int paper_type;
+	if(argv[2][0] == 'n') {
+		paper_type = PAPER_WIDTH_NARROW;
+	} else if(argv[2][0] == 'w') {
+		paper_type = PAPER_WIDTH_WIDE;
+	} else if(argv[2][0] == '7') {
+		paper_type = PAPER_QL700;
+	} else {
+		usage(argv[0]);
+	}
 
 	ql570_open(argv[1]);
 	pngdata_t * data = loadpng(argv[3], cutoff);
-  //check_img(data);
+	//check_img(data);
 	printf("Printing image with width: %d\t and height: %d\n", data->w, data->h);
 	//check_img(data);
 	ql570_print(data, paper_type);

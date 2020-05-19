@@ -16,16 +16,73 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <string.h>
 
 #define PNG_DEBUG 3
 #include <png.h>
 
 #define ESC (0x1b)
-#define PAPER_WIDTH_NARROW (29)
-#define PAPER_WIDTH_WIDE (62)
-#define PAPER_QL700 (-1)
+
+const unsigned char PAPER_12DIA[4]  = {0x0c, 0x0c, 0x5e, 0x00};
+const unsigned char PAPER_24DIA[4]  = {0x18, 0x18, 0xec, 0x00};
+const unsigned char PAPER_58DIA[4]  = {0x3a, 0x3a, 0x6a, 0x02};
+const unsigned char PAPER_17X54[4]  = {0x11, 0x36, 0x36, 0x02};
+const unsigned char PAPER_17X87[4]  = {0x11, 0x57, 0xbc, 0x03};
+const unsigned char PAPER_23X23[4]  = {0x17, 0x17, 0xca, 0x00};
+const unsigned char PAPER_29X90[4]  = {0x1d, 0x5a, 0xdf, 0x03};
+const unsigned char PAPER_38X90[4]  = {0x26, 0x5a, 0xdf, 0x03};
+const unsigned char PAPER_39X48[4]  = {0x27, 0x30, 0xef, 0x01};
+const unsigned char PAPER_52X29[4]  = {0x34, 0x1d, 0x0f, 0x01};
+const unsigned char PAPER_62X29[4]  = {0x3e, 0x1d, 0x0f, 0x01};
+const unsigned char PAPER_62X100[4] = {0x3e, 0x64, 0x55, 0x04};
+const int           INDIVIDUAL      = -1;
+// 0 is fast but low quality, while 1 is high quality with slower print
+const _Bool         QUALITY         = 1;
+
+#define CUTTING_EVERY 1 //Cut every n label
+
+#define CUTTER_ON 0x08
 
 #define DEBUG
+
+/*
+ * DATA FORMAT
+ * ESC i z F1 F2 WIDTH MEDIALENGTH PRINTLENGHT PRINTLENGHT 00 00 PAGE 00
+ * F1:
+ * 0x80
+ * 0x40 Quality>Speed 1 / Speed>Quality 0
+ * 0x20
+ * 0x10
+ * 0x08
+ * 0x04
+ * 0x02
+ * 0x01
+ *
+ * F2:
+ * 0x80 (seems to be always 1)
+ * 0x40
+ * 0x20 (seems to be always 1)
+ * 0x10
+ * 0x08
+ * 0x04
+ * 0x02
+ * 0x01 Specific Length 1 / Endless 0
+ *
+ * MEDIALENGTH is only set if not endless
+ *
+ *
+ *
+ * Cutting:
+ * ESC i A XX (XX = everyXlabel; 01, 02, ...)
+ * ESC i K XX with XX:
+ * 0x80
+ * 0x40 600dpi 1 / 300dpi 0
+ * 0x20
+ * 0x10
+ * 0x08 Cutting on 1 / Cutting off 0
+ * 0x04
+ * 0x02
+ */
 
 FILE * fp;
 
@@ -63,7 +120,7 @@ void check_img(pngdata_t * img)
 
 }
 
-/* 
+/*
 
 
 0000000000000000000000000000000000000000000000000000000000000000
@@ -76,26 +133,24 @@ void check_img(pngdata_t * img)
 1b696424006700005a00000000000000000000000000000000000000000000000000000000000000000000000000000000000070700e0000381c070000000000000000000000000000000000000000000000000000000000000000000000000000000000006700
 */
 
-void ql570_print(pngdata_t * img, unsigned int paper_width)
+void ql570_print(pngdata_t * img, unsigned int paper_type, unsigned char paper_params[4])
 {
 
 	/* Init */
 	fprintf(fp, "%c%c", ESC, '@');
 
 	/* Set media type */
-	if( paper_width == PAPER_QL700 ) {
-		// sample roll that ships with QL700
-		// 1BH, 69H, 7AH, 0EH, 0BH, 1DH, 5AH, DFH, 03H, 00H, 00H, 00H, 00H
-		fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0x0e, 0x0b, 0x1d, 0x5a, 0xdf, 0x03, 0, 0, 0, 0);
+	if (paper_type == INDIVIDUAL) {
+		fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0x0e | (QUALITY * 0x40), 0x0b, paper_params[0], paper_params[1], paper_params[2], paper_params[3], 0, 0, 0, 0);
 	} else {
-		fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0xa6, 0x0a, paper_width, 0, img->h & 0xff, img->h >> 8, 0, 0, 0, 0);
+		fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c%c%c", ESC, 'i', 'z', 0xa6 | (QUALITY * 0x40), 0x0a, paper_type, 0, img->h & 0xff, img->h >> 8, 0, 0, 0, 0);
 	}
-	
+
 	/* Set cut type */
-	fprintf(fp, "%c%c%c", ESC, 'i', 'K');
+  	fprintf(fp, "%c%c%c%c", ESC, 'i', 'K', CUTTER_ON);
 
 	/* Enable cutter */
-	fprintf(fp, "%c%c%c", ESC, 'i', 'A');
+	fprintf(fp, "%c%c%c%c", ESC, 'i', 'A', CUTTING_EVERY);
 
 	/* Set margin = 0 */
 	fprintf(fp, "%c%c%c%c%c", ESC, 'i', 'd', 0, 0);
@@ -255,9 +310,29 @@ pngdata_t * loadpng(const char * path, int cutoff) {
 }
 
 void usage(const char* cmd) {
-	fprintf(stderr, "Usage: %s printer n|w|7 pngfile [cutoff]\n", cmd);
-	fprintf(stderr, "  Where 'n' is narrow paper (29 mm) and 'w' is wide paper (62 mm) and '7'\n");
-	fprintf(stderr, "  is the 1.1\" x 3.5\" sample labels that ship with the QL-700.\n");
+	fprintf(stderr, "Usage: %s printer format pngfile [cutoff]\n", cmd);
+	fprintf(stderr, "  format:\n");
+	fprintf(stderr, "  - 12      12 mm endless (DK-22214)\n");
+	fprintf(stderr, "  - 29\n");
+	fprintf(stderr, "    n       29 mm endless (DK-22210, 22211)\n");
+	fprintf(stderr, "  - 38      38 mm endless (DK-22225)\n");
+	fprintf(stderr, "  - 50      50 mm endless (DK-22246)\n");
+	fprintf(stderr, "  - 54      54 mm endless (DK-N55224)\n");
+	fprintf(stderr, "  - 62\n");
+	fprintf(stderr, "    w       62 mm endless (DK-22205, 44205, 44605, 22212, 22251, 22606, 22113)\n");
+	fprintf(stderr, "  - 12d     Ø 12 mm round (DK-11219)\n");
+	fprintf(stderr, "  - 24d     Ø 24 mm round (DK-11218)\n");
+	fprintf(stderr, "  - 58d     Ø 58 mm round (DK-11207)\n");
+	fprintf(stderr, "  - 17x54   17x54 mm      (DK-11204)\n");
+	fprintf(stderr, "  - 17x87   17x87 mm      (DK-11203)\n");
+	fprintf(stderr, "  - 23x23   23x23 mm      (DK-11221)\n");
+	fprintf(stderr, "  - 29x90\n");
+	fprintf(stderr, "    7       29x90 mm      (DK-11201)\n");
+	fprintf(stderr, "  - 38x90   38x90 mm      (DK-11208)\n");
+	fprintf(stderr, "  - 39x48   39x48 mm\n");
+	fprintf(stderr, "  - 52x29   52x29 mm\n");
+	fprintf(stderr, "  - 62x29   62x29 mm      (DK-11209)\n");
+	fprintf(stderr, "  - 62x100  62x100 mm     (DK-11202)\n");
 	fprintf(stderr, "  [cutoff] is the optional color/greyscale to monochrome conversion cutoff (default: 180).\n");
 	fprintf(stderr, "  Example: %s /dev/usb/lp0 n image.png\n", cmd);
 	fprintf(stderr, "  Hint: If the printer's status LED blinks red, then your media type is probably wrong.\n");
@@ -272,7 +347,6 @@ int main(int argc, const char ** argv) {
 		usage(argv[0]);
 		return -1;
 	}
-
 	if(argc == 5) {
 		cutoff = atoi(argv[4]);
 		if(cutoff <= 0) {
@@ -286,14 +360,58 @@ int main(int argc, const char ** argv) {
 	}
 
 	int paper_type;
-	if(argv[2][0] == 'n') {
-		paper_type = PAPER_WIDTH_NARROW;
-	} else if(argv[2][0] == 'w') {
-		paper_type = PAPER_WIDTH_WIDE;
-	} else if(argv[2][0] == '7') {
-		paper_type = PAPER_QL700;
+	unsigned char paper_param[4];
+	if (!strcmp(argv[2], "12")) {
+		paper_type = 12;
+	} else if (!strcmp(argv[2], "n") || !strcmp(argv[2], "29")) {
+		paper_type = 29;
+	} else if (!strcmp(argv[2], "38")) {
+		paper_type = 38;
+	} else if (!strcmp(argv[2], "50")) {
+		paper_type = 50;
+	} else if (!strcmp(argv[2], "54")) {
+		paper_type = 54;
+	} else if (!strcmp(argv[2], "w") || !strcmp(argv[2], "62")) {
+		paper_type = 62;
+	} else if (!strcmp(argv[2], "12d")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_12DIA, 4);
+	} else if (!strcmp(argv[2], "24d")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_24DIA, 4);
+	} else if (!strcmp(argv[2], "58d")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_58DIA, 4);
+	} else if (!strcmp(argv[2], "17x54")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_17X54, 4);
+	} else if (!strcmp(argv[2], "17x87")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_17X87, 4);
+	} else if (!strcmp(argv[2], "23x23")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_23X23, 4);
+	} else if (!strcmp(argv[2], "7") || !strcmp(argv[2], "29x90")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_29X90, 4);
+	} else if (!strcmp(argv[2], "38x90")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_38X90, 4);
+	} else if (!strcmp(argv[2], "39x48")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_39X48, 4);
+	} else if (!strcmp(argv[2], "52x29")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_52X29, 4);
+	} else if (!strcmp(argv[2], "62x29")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_62X29, 4);
+	} else if (!strcmp(argv[2], "62x29")) {
+		paper_type = INDIVIDUAL;
+		memcpy(paper_param, PAPER_62X100, 4);
 	} else {
 		usage(argv[0]);
+		exit(EXIT_FAILURE);
 	}
 
 	ql570_open(argv[1]);
@@ -301,6 +419,7 @@ int main(int argc, const char ** argv) {
 	//check_img(data);
 	printf("Printing image with width: %d\t and height: %d\n", data->w, data->h);
 	//check_img(data);
-	ql570_print(data, paper_type);
+	ql570_print(data, paper_type, paper_param);
 	return EXIT_SUCCESS;
 }
+

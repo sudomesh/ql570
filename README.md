@@ -1,10 +1,8 @@
-# About #
+# About
 
-This program prints 1083 by 336 pixel monochrome PNG files on the Brother QL-570 thermal sticker printer by writing to the Linux device file (e.g. /dev/usb/lp0).
+This program prints 1083 by 336 pixel monochrome PNG files on the Brother QL-570 and QL-700 thermal sticker printer by writing to the Linux device file (e.g. /dev/usb/lp0).
 
-Also tested with model QL-700 and DK 29mm x 90.3mm non-continuous sample labels
-
-# Prerequisites #
+# Prerequisites
 
 You need libpng and the libpng header files in order to compile. To install the required packages on a Debiab-based system:
 
@@ -12,7 +10,7 @@ You need libpng and the libpng header files in order to compile. To install the 
 sudo aptitude install build-essential libpng12-0 libpng12-dev pkg-config
 ```
 
-# Compiling #
+# Compiling
 
 Simply run:
 
@@ -20,7 +18,7 @@ Simply run:
 make
 ```
 
-# Usage #
+# Usage
 
 ```
 Usage: ./ql570 printer format pngfile [cutoff]
@@ -53,10 +51,19 @@ Usage: ./ql570 printer format pngfile [cutoff]
 
 If you try to print a greyscale or monochrome PNG, then it will be converted to monochrome before printing. The image is converted by turning all pixels that have a value of less than 180 out of 255 in either color channel to black, and the rest to white. The cutoff can be adjusted to something other than 180 by specifying it on the command line.
 
-# Credit #
+# Credit
 
-Asbjørn Sloth Tønnesen reverse-engineered the QL-570 protocol and wrote all the important parts of this program.
+* Asbjørn Sloth Tønnesen reverse-engineered the QL-570 protocol and wrote all the important parts of this program.
+* Marc Juul added support for different paper sizes and conversion cutoff.
+* Kurt Heston added QL-700 support.
+* Luca Zimmermann added support for mostly all paper sizes and option for print quality vs. speed.
 
-Marc Juul added support for different paper sizes and conversion cutoff.
+# License and copyright
 
-Luca Zimmermann added support for mostly all paper sizes and option for print quality vs. speed.
+License: GPLv3
+
+* Copyright 2012 Asbjørn Sloth Tønnesen
+* Copyright 2014 [Marc Juul](https://github.com/juul)
+* Copyright 2014 [Kurt Heston](https://github.com/kheston)
+* Copyright 2016 [BioBricks Foundation](https://biobricks.org)
+* Copyright 2020 [Luca Zimmermann](https://github.com/soundstorm)

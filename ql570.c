@@ -351,6 +351,10 @@ void usage(const char* cmd) {
 	exit(EXIT_FAILURE);
 }
 
+void ql570_ping() {
+	fprintf(fp, "%c", 0x00);
+}
+
 int main(int argc, const char ** argv) {
 	int cutoff = 180;
 	pngdata_t *data;
@@ -421,6 +425,10 @@ int main(int argc, const char ** argv) {
 	} else if (!strcmp(argv[2], "62x29")) {
 		paper_type = INDIVIDUAL;
 		memcpy(paper_param, PAPER_62X100, 4);
+	} else if (!strcmp(argv[2], "ping")) {
+		ql570_open(argv[1]);
+		ql570_ping();
+		return EXIT_SUCCESS;
 	} else {
 		usage(argv[0]);
 		exit(EXIT_FAILURE);

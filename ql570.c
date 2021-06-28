@@ -206,7 +206,8 @@ pngdata_t * loadpng(const char * path, int cutoff) {
 	uint8_t * bitmap;
 
 	/* open file and test for it being a png */
-	fp = fopen(path, "rb");
+	if(!strcmp(path,"-")) fp=stdin;
+	else fp = fopen(path, "rb");
 	if (!fp)
 		abort_("[read_png_file] File %s could not be opened for reading", path);
 	fread(header, 1, 8, fp);
@@ -320,7 +321,7 @@ pngdata_t * loadpng(const char * path, int cutoff) {
 }
 
 void usage(const char* cmd) {
-	fprintf(stderr, "Usage: %s printer format pngfile [cutoff]\n", cmd);
+	fprintf(stderr, "Usage: %s printer format [pngfile] [cutoff]\n", cmd);
 	fprintf(stderr, "  format:\n");
 	fprintf(stderr, "  - 12      12 mm endless (DK-22214)\n");
 	fprintf(stderr, "  - 29\n");
@@ -345,15 +346,20 @@ void usage(const char* cmd) {
 	fprintf(stderr, "  - 62x100  62x100 mm     (DK-11202)\n");
 	fprintf(stderr, "  [cutoff] is the optional color/greyscale to monochrome conversion cutoff (default: 180).\n");
 	fprintf(stderr, "  Example: %s /dev/usb/lp0 n image.png\n", cmd);
+	fprintf(stderr, "           qrencode -s10 -m1 \"test\" -o -|%s /dev/usb/lp0 n; # read qrencode output from stdin\n", cmd);
 	fprintf(stderr, "  Hint: If the printer's status LED blinks red, then your media type is probably wrong.\n");
 	exit(EXIT_FAILURE);
 }
 
+void ql570_ping() {
+	fprintf(fp, "%c", 0x00);
+}
+
 int main(int argc, const char ** argv) {
-
 	int cutoff = 180;
+	pngdata_t *data;
 
-	if ((argc < 4) || (argc > 5)) {
+	if ((argc < 3) || (argc > 5)) {
 		usage(argv[0]);
 		return -1;
 	}
@@ -419,13 +425,20 @@ int main(int argc, const char ** argv) {
 	} else if (!strcmp(argv[2], "62x29")) {
 		paper_type = INDIVIDUAL;
 		memcpy(paper_param, PAPER_62X100, 4);
+	} else if (!strcmp(argv[2], "ping")) {
+		ql570_open(argv[1]);
+		ql570_ping();
+		return EXIT_SUCCESS;
 	} else {
 		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
 	ql570_open(argv[1]);
-	pngdata_t * data = loadpng(argv[3], cutoff);
+	if(argc<4){
+		printf("Loading image from stdin\n");
+		data = loadpng("-", cutoff);
+	} else data = loadpng(argv[3], cutoff);
 	//check_img(data);
 	printf("Printing image with width: %d\t and height: %d\n", data->w, data->h);
 	//check_img(data);
